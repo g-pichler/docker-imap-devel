@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM debian:latest
 
 MAINTAINER antespi@gmail.com
 
@@ -35,6 +35,10 @@ RUN set -x; \
     && echo "Installed: OK"
 
 ADD postfix /etc/postfix
+
+# Disable DNS reverse lookup
+RUN echo 'smtpd_peername_lookup = no' >>/etc/postfix/main.cf
+RUN echo 'global(net.enableDNS="off")' >/etc/rsyslog.d/99-dns.conf
 
 COPY dovecot/auth-passwdfile.inc /etc/dovecot/conf.d/
 COPY dovecot/??-*.conf /etc/dovecot/conf.d/

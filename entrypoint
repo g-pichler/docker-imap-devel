@@ -21,8 +21,8 @@ _log() {
     local logfile=/var/log/mail.log
     if [ ! -f $logfile ]; then
         touch $logfile
-        chown syslog:adm $logfile
-        chmod 640 $logfile
+        #chown syslog:adm $logfile
+        chmod 666 $logfile
     fi
     echo "$(date '+%b %e %H:%I:%S') $(hostname) entrypoint[$$]: $1" >> $logfile
 }
@@ -144,10 +144,18 @@ sed -i -e 's/^.*postmaster_address.*/postmaster_address = '${POSTMASTER_ADDRESS}
 sed -i -e 's/^.*postmaster_address.*/  postmaster_address = '${POSTMASTER_ADDRESS}'/g' /etc/dovecot/conf.d/20-lmtp.conf
 
 
+# Disable postfix peername lookup
+if ! grep -q 'smtpd_peername_lookup = no'; then
+    echo 'smtpd_peername_lookup = no' >>/etc/postfix/main.cf
+fi
+
+# Disable kernel logging
+sed -i -e 's/^.*load="imklog".*/#module(load="imklog")/g' /etc/rsyslog.conf
+
 _log "Docker entrypoint configured"
 
 # Start syslog daemon
-/etc/init.d/rsyslog start
+rsyslogd -n &
 
 # Start Postfix daemon
 /etc/init.d/postfix start
